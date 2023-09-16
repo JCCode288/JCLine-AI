@@ -52,6 +52,10 @@ export class WhatsappController {
   async postWebhooks(@Body() body) {
     try {
       this.logger.log(body, WhatsappController.name + ' Post Webhook');
+
+      return await this.whatsappService.handleMessage(
+        body.entry[0].changes[0].value.messages[0].text.body,
+      );
     } catch (err) {
       this.logger.error(err, WhatsappController.name + ' Post Webhook');
 

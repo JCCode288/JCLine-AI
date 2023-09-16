@@ -7,7 +7,7 @@ import { OpenAIModule } from './module/openai/openai.module';
 import { LineModule } from './module/line/line.module';
 import { JwtModule } from './module/jwt/jwt.module';
 
-const appModules = [WebhooksModule, WhatsappModule, OpenAIModule];
+const appModules = [WebhooksModule, WhatsappModule, OpenAIModule, LineModule];
 const configModules = [ConfigModule.forRoot({ isGlobal: true })];
 
 @Module({

@@ -1,11 +1,15 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { JwtService } from '../jwt/jwt.service';
+import { WebhooksService } from './webhooks/webhooks.service';
 
 @Injectable()
 export class WhatsappService {
   private readonly logger = new Logger();
   private token_secret = process.env.SECRET;
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly webhookService: WebhooksService,
+  ) {}
 
   async validate(hub_token: string) {
     try {
@@ -28,6 +32,15 @@ export class WhatsappService {
       );
     } catch (err) {
       this.logger.log(err, WhatsappService.name);
+
+      throw err;
+    }
+  }
+  async handleMessage(data: string) {
+    try {
+      return await this.webhookService.handleMessage(data);
+    } catch (err) {
+      this.logger.error(err, WhatsappService.name + ' handleMessage');
 
       throw err;
     }
