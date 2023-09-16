@@ -2,6 +2,6 @@ import { Module } from '@nestjs/common';
 import { WebhooksService } from './webhooks.service';
 
 @Module({
-  providers: [WebhooksService]
+  providers: [WebhooksService],
 })
 export class WebhooksModule {}
