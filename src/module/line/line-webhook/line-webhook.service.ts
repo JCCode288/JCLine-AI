@@ -24,6 +24,10 @@ export class LineWebhookService {
     this.logger.log(body, 'Stringified Body');
     this.logger.log(header_sign, 'Header Sign');
     return new Promise((res, rej) => {
+      const error = new HttpException(
+        'Message verificatiton failed',
+        HttpStatus.UNAUTHORIZED,
+      );
       try {
         const signature = this.crypto
           .createHmac('SHA256', this.line_secret)
@@ -32,24 +36,13 @@ export class LineWebhookService {
 
         this.logger.log({ signature }, 'Signature Body');
 
-        if (signature === header_sign) {
-          rej(
-            new HttpException(
-              'Message verificatiton failed',
-              HttpStatus.UNAUTHORIZED,
-            ),
-          );
+        if (signature !== header_sign) {
+          rej(false);
         }
 
         res(true);
       } catch (err) {
-        console.log(err, '<<< Error');
-        rej(
-          new HttpException(
-            'Message verificatiton failed',
-            HttpStatus.UNAUTHORIZED,
-          ),
-        );
+        rej(error);
       }
     });
   }

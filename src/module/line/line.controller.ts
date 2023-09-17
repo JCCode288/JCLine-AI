@@ -1,13 +1,5 @@
-import {
-  Controller,
-  Post,
-  Logger,
-  Body,
-  Req,
-  Res,
-  HttpException,
-} from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Controller, Post, Logger, Body, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { LineWebhookService } from './line-webhook/line-webhook.service';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 
@@ -19,26 +11,25 @@ export class LineController {
   @Post('webhooks')
   async postLineWebhook(@Body() body: LineWebhookDto, @Req() req: Request) {
     try {
-      //   const headers = req.headers;
+      const headers = req.headers;
 
-      //   const signature = headers['x-line-signature'] as string;
+      let signature = headers['x-line-signature'] as string;
 
-      //   if (!signature || typeof signature !== 'string') {
-      //     throw new HttpException('Invalid Header', 400);
-      //   }
-
-      //   await this.lineWebhookService.verifyMessage(
-      //     JSON.stringify(body),
-      //     signature,
-      //   );
+      if (!signature || typeof signature !== 'string') {
+        signature = 'NoSignatureProvided';
+      }
 
       const topEvent = body.events[0];
+      const validate = await this.lineWebhookService.verifyMessage(
+        JSON.stringify(body),
+        signature,
+      );
 
       const message = topEvent?.message;
       if (message && topEvent.type === 'message') {
         this.logger.log(message, LineController.name + ' Webhook Post');
 
-        if (message.type === 'text' && message.text) {
+        if (message.type === 'text' && message.text && validate) {
           const resMessage = await this.lineWebhookService.handleMessage(
             message.text,
           );
