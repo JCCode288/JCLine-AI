@@ -20,7 +20,7 @@ export class OpenAIService {
           { role: 'user', content: message },
         ],
         model: 'gpt-4',
-        temperature: 9,
+        temperature: 0.9,
       });
     } catch (err) {
       this.logger.error(err, OpenAIService.name + ' Prompt');
