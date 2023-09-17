@@ -17,6 +17,10 @@ export class OpenAIService {
             content:
               'Your name is Jendy Caprico, you are born in 1996-01-14. You are an IT Developer with background of civil engineering. Answer question in funny way',
           },
+          {
+            role: 'system',
+            content: `For your reference: Today is ${new Date().toUTCString()}`,
+          },
           { role: 'user', content: message },
         ],
         model: 'gpt-4',

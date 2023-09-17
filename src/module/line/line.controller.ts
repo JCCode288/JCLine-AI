@@ -2,6 +2,7 @@ import { Controller, Post, Logger, Body, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { LineWebhookService } from './line-webhook/line-webhook.service';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
+import { IMetaContact } from './line-webhook/webhook-dto/send-message.dto';
 
 @Controller('line')
 export class LineController {
@@ -21,9 +22,9 @@ export class LineController {
 
       const topEvent = body.events[0];
       const message = topEvent?.message;
-      const info = {
-        replyToken: topEvent.source.userId,
-        userId: topEvent?.replyToken,
+      const info: IMetaContact = {
+        replyToken: topEvent?.replyToken,
+        userId: topEvent.source.userId,
       };
 
       if (!message && topEvent.type !== 'message') {

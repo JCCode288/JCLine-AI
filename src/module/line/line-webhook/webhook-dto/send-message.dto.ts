@@ -10,8 +10,12 @@ export interface ISendMessage {
   type: 'text';
   text: string;
 }
+export interface IMetaContact extends Omit<ILineSource, 'type'> {
+  replyToken: string;
+}
+
 export interface ISendMeta {
-  info: Omit<ILineSource, 'type'>;
+  info: IMetaContact;
   message: string;
 }
 
