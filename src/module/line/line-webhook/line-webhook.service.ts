@@ -58,10 +58,10 @@ export class LineWebhookService {
     });
   }
 
-  async sendMessage({ replyToken, message }: ISendMeta) {
+  async sendMessage({ info, message }: ISendMeta) {
     try {
       const messageBuild: SendMessageDto = {
-        replyToken,
+        ...info,
         messages: [
           {
             type: 'text',

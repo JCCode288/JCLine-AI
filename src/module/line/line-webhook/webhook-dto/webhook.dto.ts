@@ -22,7 +22,7 @@ export interface ILineMessage {
 
 export interface ILineSource {
   type: string;
-  userId?: string;
+  userId: string;
 }
 
 export interface IDeliveryContext {

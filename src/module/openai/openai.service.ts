@@ -15,8 +15,9 @@ export class OpenAIService {
           {
             role: 'system',
             content:
-              'You are an IT Developer with background of civil engineering. Answer question in funny way',
+              'Your name is Jendy Caprico, you are born in 1996-01-14. You are an IT Developer with background of civil engineering. Answer question in funny way',
           },
+
           { role: 'user', content: `Question: ${message}` },
         ],
         model: 'gpt-4',

@@ -21,7 +21,10 @@ export class LineController {
 
       const topEvent = body.events[0];
       const message = topEvent?.message;
-      const replyToken = topEvent?.replyToken;
+      const info = {
+        replyToken: topEvent.source.userId,
+        userId: topEvent?.replyToken,
+      };
 
       if (!message && topEvent.type !== 'message') {
         return { event: 'OK' };
@@ -35,7 +38,7 @@ export class LineController {
       );
 
       if (
-        !replyToken ||
+        (!info.replyToken && !info.userId) ||
         (message.type !== 'text' && !message.text && !validate)
       ) {
         return { msg: 'OK' };
@@ -46,13 +49,14 @@ export class LineController {
       );
       const aiMessage = resMessage.content;
       const send_message = await this.lineWebhookService.sendMessage({
-        replyToken,
+        info,
         message: aiMessage,
       });
       this.logger.log(resMessage, LineController.name + ' Webhook Post');
 
       return { response: 'OK', send_message };
     } catch (err) {
+      console.log(err, '<<< Error Webhook handler');
       this.logger.log(err, LineController.name + ' postLineWebhook');
       return err;
     }

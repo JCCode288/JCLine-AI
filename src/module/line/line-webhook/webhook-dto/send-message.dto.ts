@@ -1,5 +1,8 @@
+import { ILineSource } from './webhook.dto';
+
 export class SendMessageDto {
-  public readonly replyToken: string;
+  public readonly replyToken?: string;
+  public readonly userId: string;
   public readonly messages: ISendMessage[];
 }
 
@@ -8,7 +11,7 @@ export interface ISendMessage {
   text: string;
 }
 export interface ISendMeta {
-  replyToken: string;
+  info: Omit<ILineSource, 'type'>;
   message: string;
 }
 
