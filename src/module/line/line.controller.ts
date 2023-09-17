@@ -32,13 +32,19 @@ export class LineController {
       //     signature,
       //   );
 
-      const message = body.events[0].message?.text;
+      const topEvent = body.events[0];
 
-      this.logger.log(message, LineController.name + ' Webhook Post');
+      const message = topEvent?.message;
+      if (message && topEvent.type === 'message') {
+        this.logger.log(message, LineController.name + ' Webhook Post');
 
-      const resMessage = await this.lineWebhookService.handleMessage(message);
-
-      this.logger.log(resMessage, LineController.name + ' Webhook Post');
+        if (message.type === 'text' && message.text) {
+          const resMessage = await this.lineWebhookService.handleMessage(
+            message.text,
+          );
+          this.logger.log(resMessage, LineController.name + ' Webhook Post');
+        }
+      }
 
       const response = 'OK';
 
