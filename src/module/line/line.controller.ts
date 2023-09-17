@@ -21,7 +21,7 @@ export class LineController {
 
       const topEvent = body.events[0];
       const message = topEvent?.message;
-      const replyToken = topEvent.replyToken;
+      const replyToken = topEvent?.replyToken;
 
       if (!message && topEvent.type !== 'message') {
         return { event: 'OK' };
@@ -34,7 +34,10 @@ export class LineController {
         signature,
       );
 
-      if (message.type !== 'text' && !message.text && !validate) {
+      if (
+        !replyToken ||
+        (message.type !== 'text' && !message.text && !validate)
+      ) {
         return { msg: 'OK' };
       }
 
