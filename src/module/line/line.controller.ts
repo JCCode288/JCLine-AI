@@ -36,7 +36,9 @@ export class LineController {
 
       this.logger.log(message, LineController.name + ' Webhook Post');
 
-      return await this.lineWebhookService.handleMessage(message);
+      const response = await this.lineWebhookService.handleMessage(message);
+
+      return response;
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
       throw err;

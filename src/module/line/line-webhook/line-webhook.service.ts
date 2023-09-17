@@ -13,7 +13,7 @@ export class LineWebhookService {
     try {
       const promptResult = await this.openAIService.prompt(message);
 
-      return promptResult;
+      return promptResult.choices[0].message;
     } catch (err) {
       this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
@@ -30,7 +30,7 @@ export class LineWebhookService {
           .update(body)
           .digest('base64');
 
-        this.logger.log(signature, 'Signature Body');
+        this.logger.log({ signature }, 'Signature Body');
 
         if (signature === header_sign) {
           rej(
