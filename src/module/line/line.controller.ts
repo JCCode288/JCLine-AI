@@ -42,13 +42,13 @@ export class LineController {
         message.text,
       );
       const aiMessage = resMessage.content;
-      await this.lineWebhookService.sendMessage({
+      const send_message = await this.lineWebhookService.sendMessage({
         replyToken,
         message: aiMessage,
       });
       this.logger.log(resMessage, LineController.name + ' Webhook Post');
 
-      return { response: 'OK' };
+      return { response: 'OK', send_message };
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
       return err;

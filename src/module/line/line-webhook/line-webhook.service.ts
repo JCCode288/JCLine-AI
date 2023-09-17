@@ -85,7 +85,9 @@ export class LineWebhookService {
 
       console.log(data, '<<<< Webhook Response');
 
-      if (!data.sentMessages.length) return false;
+      if (!data?.sentMessages?.length) {
+        return false;
+      }
 
       return true;
     } catch (err) {
