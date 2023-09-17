@@ -12,6 +12,7 @@ export class WebhooksService {
 
       return promptResult;
     } catch (err) {
+      this.logger.log(err, WebhooksService.name + ' handleMessage');
       throw err;
     }
   }
