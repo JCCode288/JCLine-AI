@@ -13,10 +13,10 @@ export class LineController {
     try {
       const headers = req.headers;
 
-      let signature = headers['x-line-signature'] as string;
+      const signature = headers['x-line-signature'] as string;
 
       if (!signature || typeof signature !== 'string') {
-        signature = 'NoSignatureProvided';
+        return { message: 'OK' };
       }
 
       const topEvent = body.events[0];
