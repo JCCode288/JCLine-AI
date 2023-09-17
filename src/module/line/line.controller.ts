@@ -19,26 +19,30 @@ export class LineController {
   @Post('webhooks')
   async postLineWebhook(@Body() body: LineWebhookDto, @Req() req: Request) {
     try {
-      const headers = req.headers;
+      //   const headers = req.headers;
 
-      const signature = headers['x-line-signature'] as string;
+      //   const signature = headers['x-line-signature'] as string;
 
-      if (!signature || typeof signature !== 'string') {
-        throw new HttpException('Invalid Header', 400);
-      }
+      //   if (!signature || typeof signature !== 'string') {
+      //     throw new HttpException('Invalid Header', 400);
+      //   }
 
-      await this.lineWebhookService.verifyMessage(
-        JSON.stringify(body),
-        signature,
-      );
+      //   await this.lineWebhookService.verifyMessage(
+      //     JSON.stringify(body),
+      //     signature,
+      //   );
 
       const message = body.events[0].message?.text;
 
       this.logger.log(message, LineController.name + ' Webhook Post');
 
-      const response = await this.lineWebhookService.handleMessage(message);
+      const resMessage = await this.lineWebhookService.handleMessage(message);
 
-      return response;
+      this.logger.log(resMessage, LineController.name + ' Webhook Post');
+
+      const response = 'OK';
+
+      return { response };
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
       throw err;
