@@ -6,14 +6,17 @@ import {
   ISentMessages,
   SendMessageDto,
 } from './webhook-dto/send-message.dto';
-import { LineEventDto } from './webhook-dto/webhook.dto';
 
 @Injectable()
 export class LineWebhookService {
   constructor(private readonly openAIService: OpenAIService) {}
   private readonly logger = new Logger();
   private readonly crypto = _crypto;
-  private readonly line_secret = process.env.LINE_SECRET;
+  private readonly line_secret = {
+    secret: process.env.LINE_SECRET,
+    id: process.env.LINE_SECRET_CHANNEL_ID,
+    channel: process.env.LINE_SECRET_CHANNEL_SECRET,
+  };
   private readonly post_message_url =
     'https://api.line.me/v2/bot/message/reply';
 
@@ -38,7 +41,7 @@ export class LineWebhookService {
       );
       try {
         const signature = this.crypto
-          .createHmac('SHA256', this.line_secret)
+          .createHmac('SHA256', this.line_secret.secret)
           .update(body)
           .digest('base64');
 
@@ -67,20 +70,46 @@ export class LineWebhookService {
         ],
       };
 
+      const token = await this.getToken();
+
       const res = await fetch(this.post_message_url, {
         method: 'POST',
         body: JSON.stringify(messageBuild),
         headers: {
-          'Content-Type': 'applicaiton/json',
-          Authorization: 'Bearer',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const data: ISentMessages = await res.json();
 
+      console.log(data, '<<<< Webhook Response');
+
       if (!data.sentMessages.length) return false;
 
       return true;
+    } catch (err) {
+      this.logger.error(err, LineWebhookService.name);
+      throw err;
+    }
+  }
+
+  async getToken(): Promise<string> {
+    try {
+      const formData = new URLSearchParams();
+      formData.append('grant_type', 'client_credentials');
+      formData.append('client_id', this.line_secret.id);
+      formData.append('client_secret', this.line_secret.channel);
+
+      const res = await fetch('https://api.line.me/oauth2/v3/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString(),
+      });
+
+      const data = await res.json();
+
+      return data.access_token;
     } catch (err) {
       this.logger.error(err, LineWebhookService.name);
       throw err;

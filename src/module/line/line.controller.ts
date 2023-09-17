@@ -51,7 +51,7 @@ export class LineController {
       return { response: 'OK' };
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
-      throw err;
+      return err;
     }
   }
 }
