@@ -20,26 +20,35 @@ export class LineController {
       }
 
       const topEvent = body.events[0];
+      const message = topEvent?.message;
+      const replyToken = topEvent.replyToken;
+
+      if (!message && topEvent.type !== 'message') {
+        return { event: 'OK' };
+      }
+
+      this.logger.log(message, LineController.name + ' Webhook Post');
+
       const validate = await this.lineWebhookService.verifyMessage(
         JSON.stringify(body),
         signature,
       );
 
-      const message = topEvent?.message;
-      if (message && topEvent.type === 'message') {
-        this.logger.log(message, LineController.name + ' Webhook Post');
-
-        if (message.type === 'text' && message.text && validate) {
-          const resMessage = await this.lineWebhookService.handleMessage(
-            message.text,
-          );
-          this.logger.log(resMessage, LineController.name + ' Webhook Post');
-        }
+      if (message.type !== 'text' && !message.text && !validate) {
+        return { msg: 'OK' };
       }
 
-      const response = 'OK';
+      const resMessage = await this.lineWebhookService.handleMessage(
+        message.text,
+      );
+      const aiMessage = resMessage.content;
+      await this.lineWebhookService.sendMessage({
+        replyToken,
+        message: aiMessage,
+      });
+      this.logger.log(resMessage, LineController.name + ' Webhook Post');
 
-      return { response };
+      return { response: 'OK' };
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
       throw err;
