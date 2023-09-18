@@ -24,7 +24,7 @@ export class LineWebhookService {
     try {
       const promptResult = await this.openAIService.prompt(message);
 
-      return promptResult.choices[0].text;
+      return promptResult.choices[0].message.content;
     } catch (err) {
       this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
