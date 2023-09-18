@@ -34,15 +34,14 @@ export class LineService {
         return { msg: 'OK' };
       }
 
-      const resMessage = await this.lineWebhookService.handleMessage(
+      const aiMessage = await this.lineWebhookService.handleMessage(
         message.text,
       );
-      const aiMessage = resMessage.content;
       const send_message = await this.lineWebhookService.sendMessage({
         info,
         message: aiMessage,
       });
-      this.logger.log(resMessage, LineService.name + ' Webhook Post');
+      this.logger.log(aiMessage, LineService.name + ' Webhook Post');
 
       return { response: 'OK', send_message };
     } catch (err) {
