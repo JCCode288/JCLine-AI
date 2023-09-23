@@ -37,6 +37,7 @@ export class LineService {
       const aiMessage = await this.lineWebhookService.handleMessage(
         message.text,
       );
+
       const send_message = await this.lineWebhookService.sendMessage({
         info,
         message: aiMessage,

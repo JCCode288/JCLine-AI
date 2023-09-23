@@ -1,15 +1,15 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { OpenAIService } from 'src/module/openai/openai.service';
 import * as _crypto from 'crypto';
 import {
   ISendMeta,
   ISentMessages,
   SendMessageDto,
 } from './webhook-dto/send-message.dto';
+import { OpenAIFactory } from 'src/module/openai/openai.factory';
 
 @Injectable()
 export class LineWebhookService {
-  constructor(private readonly openAIService: OpenAIService) {}
+  constructor(private readonly openAIFactory: OpenAIFactory) {}
   private readonly logger = new Logger();
   private readonly crypto = _crypto;
   private readonly line_secret = {
@@ -22,9 +22,9 @@ export class LineWebhookService {
 
   async handleMessage(message: string) {
     try {
-      const promptResult = await this.openAIService.prompt(message);
+      const agentOpenAI = await this.openAIFactory.build('agent', null);
 
-      return promptResult.choices[0].message.content;
+      return await agentOpenAI.buildChain().promptAnswer(message);
     } catch (err) {
       this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
