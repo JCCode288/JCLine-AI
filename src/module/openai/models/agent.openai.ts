@@ -5,11 +5,7 @@ import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { IAgentType, agent_type } from 'src/utils/agent.constant';
-import {
-  BufferWindowMemory,
-  ChatMessageHistory,
-  EntityMemory,
-} from 'langchain/memory';
+import { BufferWindowMemory, ChatMessageHistory } from 'langchain/memory';
 import { LLMChain } from 'langchain/chains';
 import {
   ChatPromptTemplate,

@@ -8,6 +8,8 @@ export class WebhooksService {
     try {
       // const promptResult = await this.openAIService.prompt(message);
       //       return promptResult;
+
+      return { msg: message };
     } catch (err) {
       this.logger.log(err, WebhooksService.name + ' handleMessage');
       throw err;
