@@ -25,7 +25,9 @@ export class LineWebhookService {
       const agentOpenAI = await this.openAIFactory.build('agent', null, {
         sessionId,
       });
-      const response = await agentOpenAI.buildChain().promptAnswer(message);
+      const response = await (
+        await agentOpenAI.buildChain()
+      ).promptAnswer(message);
 
       return response;
     } catch (err) {

@@ -2,27 +2,28 @@ import { Tool } from 'langchain/tools';
 import { BaseOpenAI } from './base.openai';
 import { IAgentArgs } from '../interfaces/agent.intefaces';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
+import { OpenAI } from 'langchain/llms/openai';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { IAgentType, agent_type } from 'src/utils/agent.constant';
-import { BufferWindowMemory, ChatMessageHistory } from 'langchain/memory';
-import { LLMChain } from 'langchain/chains';
+import { ConversationChain } from 'langchain/chains';
 import {
   ChatPromptTemplate,
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
+import { BaseMemory } from 'langchain/memory';
 
 export class AgentOpenAI extends BaseOpenAI {
   public override readonly model: ChatOpenAI;
   public type = 'AGENT';
+  public tool_model: OpenAI;
   public verbose: boolean;
   private tools: Tool[];
   private chainTemplate: string[];
   private persona?: string;
   private prefix?: string;
   private suffix?: string;
-  private output_variables: string[];
 
   private agent;
 
@@ -34,17 +35,15 @@ export class AgentOpenAI extends BaseOpenAI {
     prefix,
     suffix,
     memory,
-    output_variables,
   }: IAgentArgs) {
     super();
     this.tools = tools as Tool[];
     this.model = model;
-    this.memory = memory ?? this.buildDefaultMemory();
+    this.memory = memory;
     this.verbose = verbose;
     this.persona = persona ?? BASE_PERSONA;
     this.prefix = prefix;
     this.suffix = suffix;
-    this.output_variables = output_variables ?? ['input', 'agent_scratchpad'];
 
     this.chainTemplate = [this.prefix, this.suffix, this.persona];
 
@@ -96,8 +95,12 @@ export class AgentOpenAI extends BaseOpenAI {
     }
   }
 
-  buildChain() {
+  async buildChain() {
     try {
+      const memory = this.memory;
+
+      console.log(memory, '<<<<< Memory');
+
       const templates = this.chainTemplate.reduce(
         (base = [], templateMessage) => {
           if (templateMessage) {
@@ -109,16 +112,15 @@ export class AgentOpenAI extends BaseOpenAI {
         },
         [],
       );
+
       const prompt = ChatPromptTemplate.fromMessages([
         ...templates,
         HumanMessagePromptTemplate.fromTemplate(
-          `Begin! You have to remember above instructions.\nHere's your latest history with user : {chat_history}\nQuestion: {input}`,
+          `Begin! You have to remember above instructions.\nHere's your latest history with user : [{chat_history}]\nQuestion: {input} Thought:`,
         ),
       ]);
 
-      const memory = this.memory;
-
-      this.agent = new LLMChain({
+      this.agent = new ConversationChain({
         llm: this.model,
         memory,
         prompt,
@@ -130,15 +132,5 @@ export class AgentOpenAI extends BaseOpenAI {
     } catch (err) {
       throw err;
     }
-  }
-
-  buildDefaultMemory() {
-    return new BufferWindowMemory({
-      k: 5,
-      inputKey: 'input',
-      outputKey: 'output',
-      chatHistory: new ChatMessageHistory(),
-      memoryKey: 'chat_history',
-    });
   }
 }
