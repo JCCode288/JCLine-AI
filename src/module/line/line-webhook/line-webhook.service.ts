@@ -23,8 +23,9 @@ export class LineWebhookService {
   async handleMessage(message: string) {
     try {
       const agentOpenAI = await this.openAIFactory.build('agent', null);
+      const response = await agentOpenAI.buildChain().promptAnswer(message);
 
-      return await agentOpenAI.buildChain().promptAnswer(message);
+      return response;
     } catch (err) {
       this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
@@ -82,8 +83,6 @@ export class LineWebhookService {
       });
 
       const data: ISentMessages = await res.json();
-
-      console.log(data, '<<<< Webhook Response');
 
       if (!data?.sentMessages?.length) {
         return false;

@@ -5,6 +5,7 @@ import { IEmbeddingArgs } from './interfaces/embedding.interface';
 import { AgentOpenAI } from './models/agent.openai';
 import { EmbeddingOpenAI } from './models/embedding.openai';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
+import { OpenAI } from 'langchain/llms/openai';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { StructuredTool, Tool } from 'langchain/tools';
 
@@ -63,6 +64,8 @@ export class OpenAIFactory {
 
   private getModel(type: 'embedding'): Promise<OpenAIEmbeddings>;
 
+  private getModel(type: 'tool'): Promise<OpenAI>;
+
   private async getModel(type: 'agent' | 'embedding' | 'tool') {
     if (type === 'agent') {
       return new ChatOpenAI({
@@ -77,5 +80,10 @@ export class OpenAIFactory {
         modelName: this.embeddingModelName,
       });
     }
+
+    return new OpenAI({
+      ...(await this.openAIConfig.getToolConfig()),
+      modelName: this.toolModelName,
+    });
   }
 }

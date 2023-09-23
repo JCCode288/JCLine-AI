@@ -5,10 +5,15 @@ import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { IAgentType, agent_type } from 'src/utils/agent.constant';
-import { BufferMemory, ChatMessageHistory } from 'langchain/memory';
+import {
+  BufferWindowMemory,
+  ChatMessageHistory,
+  EntityMemory,
+} from 'langchain/memory';
 import { LLMChain } from 'langchain/chains';
 import {
   ChatPromptTemplate,
+  HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
 
@@ -52,7 +57,7 @@ export class AgentOpenAI extends BaseOpenAI {
 
   async promptAnswer(input: string): Promise<string> {
     try {
-      const { output } = await this.agent.invoke({ input });
+      const { output } = await this.agent.call({ input });
 
       return output;
     } catch (err) {
@@ -80,7 +85,7 @@ export class AgentOpenAI extends BaseOpenAI {
         agentArgs['suffix'] = this.suffix;
         agentArgs['prefix'] = `${this.persona}\n\n${this.prefix}`;
       }
-      const memory = this.memory ?? new BufferMemory(memoryConf);
+      const memory = this.memory ?? new BufferWindowMemory(memoryConf);
 
       const agentOpts: any = {
         agentType,
@@ -116,19 +121,33 @@ export class AgentOpenAI extends BaseOpenAI {
         },
         [],
       );
-      const prompt = ChatPromptTemplate.fromMessages(templates);
+      const prompt = ChatPromptTemplate.fromMessages([
+        ...templates,
+        HumanMessagePromptTemplate.fromTemplate(
+          `Begin! You have to remember above instructions.\nHere's your latest history with user : {chat_history}\nQuestion: {input}`,
+        ),
+      ]);
 
       const memory =
         this.memory ??
-        new BufferMemory({
+        new EntityMemory({
+          llm: this.model,
+          k: 5,
           inputKey: 'input',
           outputKey: 'output',
           aiPrefix: 'JendAI',
           humanPrefix: 'User',
           chatHistory: new ChatMessageHistory(),
-          memoryKey: 'chat_history',
+          chatHistoryKey: 'chat_history',
+          entitiesKey: 'entity_history',
         });
-      this.agent = new LLMChain({ llm: this.model, memory, prompt });
+      this.agent = new LLMChain({
+        llm: this.model,
+        memory,
+        prompt,
+        verbose: this.verbose,
+        outputKey: 'output',
+      });
 
       return this;
     } catch (err) {
