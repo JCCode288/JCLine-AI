@@ -46,7 +46,7 @@ export class AgentOpenAI extends BaseOpenAI {
     this.suffix = suffix;
     this.output_variables = output_variables ?? ['input', 'agent_scratchpad'];
 
-    this.chainTemplate = [prefix, suffix, persona];
+    this.chainTemplate = [this.prefix, this.suffix, this.persona];
 
     this.logger.log('AgentOpenAI Built!', AgentOpenAI.name);
   }
