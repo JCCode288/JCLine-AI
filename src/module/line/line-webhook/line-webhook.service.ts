@@ -1,15 +1,15 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
-import { OpenAIService } from 'src/module/openai/openai.service';
 import * as _crypto from 'crypto';
 import {
   ISendMeta,
   ISentMessages,
   SendMessageDto,
 } from './webhook-dto/send-message.dto';
+import { OpenAIFactory } from 'src/module/openai/openai.factory';
 
 @Injectable()
 export class LineWebhookService {
-  constructor(private readonly openAIService: OpenAIService) {}
+  constructor(private readonly openAIFactory: OpenAIFactory) {}
   private readonly logger = new Logger();
   private readonly crypto = _crypto;
   private readonly line_secret = {
@@ -20,11 +20,14 @@ export class LineWebhookService {
   private readonly post_message_url =
     'https://api.line.me/v2/bot/message/reply';
 
-  async handleMessage(message: string) {
+  async handleMessage(message: string, sessionId?: string) {
     try {
-      const promptResult = await this.openAIService.prompt(message);
+      const agentOpenAI = await this.openAIFactory.build('agent', null, {
+        sessionId,
+      });
+      const response = await agentOpenAI.buildChain().promptAnswer(message);
 
-      return promptResult.choices[0].message.content;
+      return response;
     } catch (err) {
       this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
@@ -82,8 +85,6 @@ export class LineWebhookService {
       });
 
       const data: ISentMessages = await res.json();
-
-      console.log(data, '<<<< Webhook Response');
 
       if (!data?.sentMessages?.length) {
         return false;

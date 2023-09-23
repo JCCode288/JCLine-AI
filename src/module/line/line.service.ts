@@ -6,7 +6,9 @@ import { IMetaContact } from './line-webhook/webhook-dto/send-message.dto';
 @Injectable()
 export class LineService {
   private readonly logger = new Logger();
+
   constructor(private readonly lineWebhookService: LineWebhookService) {}
+
   async handleMessage(body: LineWebhookDto, signature: string) {
     try {
       const topEvent = body.events[0];
@@ -37,6 +39,7 @@ export class LineService {
       const aiMessage = await this.lineWebhookService.handleMessage(
         message.text,
       );
+
       const send_message = await this.lineWebhookService.sendMessage({
         info,
         message: aiMessage,
