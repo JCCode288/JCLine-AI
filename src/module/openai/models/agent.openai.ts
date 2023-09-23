@@ -43,7 +43,7 @@ export class AgentOpenAI extends BaseOpenAI {
     super();
     this.tools = tools as Tool[];
     this.model = model;
-    this.memory = memory;
+    this.memory = memory ?? this.buildDefaultMemory();
     this.verbose = verbose;
     this.persona = persona ?? BASE_PERSONA;
     this.prefix = prefix;
@@ -68,24 +68,16 @@ export class AgentOpenAI extends BaseOpenAI {
   async buildAgent(type: keyof IAgentType) {
     try {
       const agentType = agent_type[type];
-      const memoryConf = {
-        inputKey: 'input',
-        outputKey: 'output',
-        aiPrefix: 'JendAI',
-        humanPrefix: 'User',
-        chatHistory: new ChatMessageHistory(),
-      };
       const agentArgs: any = {};
 
       if (agentType.includes('chat')) {
-        memoryConf['memoryKey'] = 'chat_history';
         agentArgs['humanMessage'] = this.suffix;
         agentArgs['systemMessage'] = `${this.persona}\n\n${this.prefix}`;
       } else {
         agentArgs['suffix'] = this.suffix;
         agentArgs['prefix'] = `${this.persona}\n\n${this.prefix}`;
       }
-      const memory = this.memory ?? new BufferWindowMemory(memoryConf);
+      const memory = this.memory;
 
       const agentOpts: any = {
         agentType,
@@ -128,19 +120,8 @@ export class AgentOpenAI extends BaseOpenAI {
         ),
       ]);
 
-      const memory =
-        this.memory ??
-        new EntityMemory({
-          llm: this.model,
-          k: 5,
-          inputKey: 'input',
-          outputKey: 'output',
-          aiPrefix: 'JendAI',
-          humanPrefix: 'User',
-          chatHistory: new ChatMessageHistory(),
-          chatHistoryKey: 'chat_history',
-          entitiesKey: 'entity_history',
-        });
+      const memory = this.memory;
+
       this.agent = new LLMChain({
         llm: this.model,
         memory,
@@ -153,5 +134,15 @@ export class AgentOpenAI extends BaseOpenAI {
     } catch (err) {
       throw err;
     }
+  }
+
+  buildDefaultMemory() {
+    return new BufferWindowMemory({
+      k: 5,
+      inputKey: 'input',
+      outputKey: 'output',
+      chatHistory: new ChatMessageHistory(),
+      memoryKey: 'chat_history',
+    });
   }
 }

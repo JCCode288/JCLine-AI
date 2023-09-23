@@ -11,4 +11,5 @@ export interface IAgentArgs {
   suffix?: string;
   output_variables?: string[];
   memory?: BaseMemory;
+  sessionId?: string;
 }

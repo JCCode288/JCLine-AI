@@ -20,9 +20,11 @@ export class LineWebhookService {
   private readonly post_message_url =
     'https://api.line.me/v2/bot/message/reply';
 
-  async handleMessage(message: string) {
+  async handleMessage(message: string, sessionId?: string) {
     try {
-      const agentOpenAI = await this.openAIFactory.build('agent', null);
+      const agentOpenAI = await this.openAIFactory.build('agent', null, {
+        sessionId,
+      });
       const response = await agentOpenAI.buildChain().promptAnswer(message);
 
       return response;

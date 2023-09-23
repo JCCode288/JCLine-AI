@@ -7,7 +7,6 @@ import { OpenAIModule } from './module/openai/openai.module';
 import { LineModule } from './module/line/line.module';
 import { JwtModule } from './module/jwt/jwt.module';
 import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
-import { SupabaseModule } from './module/supabase/supabase.module';
 
 const appModules = [
   WebhooksModule,
@@ -15,7 +14,6 @@ const appModules = [
   OpenAIModule,
   LineModule,
   JwtModule,
-  SupabaseModule,
 ];
 const configModules = [
   ConfigModule.forRoot({ isGlobal: true }),

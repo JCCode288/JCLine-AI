@@ -8,6 +8,9 @@ import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { OpenAI } from 'langchain/llms/openai';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { StructuredTool, Tool } from 'langchain/tools';
+import { EntityMemory } from 'langchain/memory';
+import { MongoClient, ObjectId } from 'mongodb';
+import { MongoDBChatMessageHistory } from 'langchain/stores/message/mongodb';
 
 @Injectable()
 export class OpenAIFactory {
@@ -37,8 +40,10 @@ export class OpenAIFactory {
     try {
       if (type === 'agent') {
         const model: ChatOpenAI = await this.getModel(type);
+        const memory = await this.buildEntityMemory();
         const agentOpts: IAgentArgs = {
           ...options,
+          memory,
           verbose: true,
           tools,
           model,
@@ -85,5 +90,32 @@ export class OpenAIFactory {
       ...(await this.openAIConfig.getToolConfig()),
       modelName: this.toolModelName,
     });
+  }
+
+  async buildEntityMemory(
+    sessionId = new ObjectId().toString(),
+    returnMessages = false,
+    aiPrefix?: string,
+  ) {
+    try {
+      const client = new MongoClient(process.env.MONGO_DB_URI || '');
+      await client.connect();
+      const collection = client.db('langchain').collection('memory');
+
+      return new EntityMemory({
+        llm: await this.getModel('tool'),
+        k: 5,
+        inputKey: 'input',
+        outputKey: 'output',
+        aiPrefix: aiPrefix ?? 'JendAI',
+        humanPrefix: 'User',
+        chatHistory: new MongoDBChatMessageHistory({ collection, sessionId }),
+        chatHistoryKey: 'chat_history',
+        entitiesKey: 'entity_history',
+        returnMessages,
+      });
+    } catch (err) {
+      throw err;
+    }
   }
 }
