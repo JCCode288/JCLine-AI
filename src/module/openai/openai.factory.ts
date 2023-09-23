@@ -9,7 +9,7 @@ import { OpenAI } from 'langchain/llms/openai';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { StructuredTool, Tool } from 'langchain/tools';
 import { BufferWindowMemory, EntityMemory } from 'langchain/memory';
-import { MongoClient, ObjectId } from 'mongodb';
+import { MongoClient } from 'mongodb';
 import { MongoDBChatMessageHistory } from 'langchain/stores/message/mongodb';
 
 @Injectable()

@@ -12,7 +12,6 @@ import {
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
-import { BaseMemory } from 'langchain/memory';
 
 export class AgentOpenAI extends BaseOpenAI {
   public override readonly model: ChatOpenAI;
