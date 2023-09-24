@@ -115,7 +115,7 @@ export class AgentOpenAI extends BaseOpenAI {
       const prompt = ChatPromptTemplate.fromMessages([
         ...templates,
         HumanMessagePromptTemplate.fromTemplate(
-          `Begin! You have to remember above instructions.\nHere's your entity history: [{entity_history}]\nHere's your latest history with user : [{chat_history}]\n\nQuestion: {input}\nThought:`,
+          `Begin! You have to remember above instructions.\nHere's your latest history with user : [{chat_history}]\n\nQuestion: {input}\nThought:`,
         ),
       ]);
 

@@ -15,17 +15,19 @@ import {
 } from 'langchain/memory';
 import { MongoDBChatMessageHistory } from 'langchain/stores/message/mongodb';
 import { MongodbService } from '../mongodb/mongodb.service';
-import { MongoDBAtlasVectorSearch } from 'langchain/vectorstores/mongodb_atlas';
+import { RedisVectorStore } from 'langchain/vectorstores/redis';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class OpenAIFactory {
   private agentModelName = 'gpt-3.5-turbo';
-  private embeddingModelName = 'text-ada-002';
+  private embeddingModelName = 'text-embedding-ada-002';
   private toolModelName = 'text-davinci-003';
 
   constructor(
     private readonly openAIConfig: OpenaiConfig,
     private readonly mongodbService: MongodbService,
+    private readonly redisService: RedisService,
   ) {}
   async build(
     type: 'agent',
@@ -49,8 +51,7 @@ export class OpenAIFactory {
     try {
       if (type === 'agent') {
         const model: ChatOpenAI = await this.getModel(type);
-        const sessionId: string = options['sessionId'];
-        const memory = await this.buildEntityMemory(sessionId);
+        const memory = await this.buildVectorMemory();
 
         const agentOpts: IAgentArgs = {
           ...options,
@@ -178,14 +179,12 @@ export class OpenAIFactory {
 
   async buildVectorStore() {
     try {
-      const collection = this.mongodbService.getCollection('VECTOR');
-
       const embedding = await this.build('embedding', null);
+      const client = this.redisService.getClient();
 
-      const vectorStore = new MongoDBAtlasVectorSearch(embedding.model, {
-        collection: collection,
-        textKey: 'chat_history',
-        embeddingKey: 'context',
+      const vectorStore = new RedisVectorStore(embedding.model, {
+        redisClient: client,
+        indexName: 'docs',
       });
 
       return vectorStore;
