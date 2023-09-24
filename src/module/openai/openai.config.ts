@@ -14,7 +14,7 @@ export class OpenaiConfig extends ConfigService {
         temperature = 0.3;
       }
 
-      const maxRetries = 10;
+      const maxRetries = 1;
       const configs = {
         openAIApiKey,
         maxRetries,
@@ -51,7 +51,7 @@ export class OpenaiConfig extends ConfigService {
     return new Promise((res, rej) => {
       const openAIApiKey = this.get<string>('OPENAI_KEY');
       const temperature = 0.1;
-      const maxRetries = 10;
+      const maxRetries = 1;
 
       const configs = {
         openAIApiKey,
