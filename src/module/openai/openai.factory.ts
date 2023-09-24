@@ -51,10 +51,7 @@ export class OpenAIFactory {
     try {
       if (type === 'agent') {
         const model: ChatOpenAI = await this.getModel(type);
-        const memory = await this.buildBufferWindowMemory(
-          options['sessionId'],
-          true,
-        );
+        const memory = await this.buildBufferWindowMemory(options['sessionId']);
 
         const agentOpts: IAgentArgs = {
           ...options,

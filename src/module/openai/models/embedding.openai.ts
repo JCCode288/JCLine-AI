@@ -20,7 +20,13 @@ export class EmbeddingOpenAI {
       const splitter = new RecursiveCharacterTextSplitter({
         chunkSize: 75,
         chunkOverlap: 1,
-        separators: ['SUMMARY', 'EDUCATION', 'EXPERIENCE', 'PROJECTS', '\n\n'],
+        separators: [
+          'SUMMARY',
+          'EDUCATION',
+          'WORK EXPERIENCE',
+          'PROJECTS',
+          '\n\n',
+        ],
       });
 
       const docs = await loader.load();

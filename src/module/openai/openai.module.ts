@@ -15,7 +15,8 @@ export class OpenAIModule implements OnModuleInit {
   async onModuleInit() {
     try {
       // const embedding = await this.openAIFactory.build('embedding', null);
-      // const context = await embedding.search('jendy');
+      // await embedding.injectPDF('assets/full_cv.pdf');
+      // const context = await embedding.search('pengalaman kerja');
       // console.log(context, '<<<< Context');
     } catch (err) {
       console.log(err);
