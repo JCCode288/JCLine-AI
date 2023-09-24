@@ -7,6 +7,7 @@ import { OpenAIModule } from './module/openai/openai.module';
 import { LineModule } from './module/line/line.module';
 import { JwtModule } from './module/jwt/jwt.module';
 import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
+import { MongodbModule } from './module/mongodb/mongodb.module';
 
 const appModules = [
   WebhooksModule,
