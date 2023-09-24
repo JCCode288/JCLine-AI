@@ -1,8 +1,6 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { OpenaiConfig } from './openai.config';
 import { OpenAIFactory } from './openai.factory';
-import { MongodbModule } from '../mongodb/mongodb.module';
-import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
 import { RedisService } from './redis.service';
 import { MongodbService } from './mongodb.service';
 
