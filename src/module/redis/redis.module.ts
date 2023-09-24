@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RedisService } from './redis.service';
+import { RedisService } from '../openai/redis.service';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({

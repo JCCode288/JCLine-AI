@@ -14,9 +14,9 @@ import {
   VectorStoreRetrieverMemory,
 } from 'langchain/memory';
 import { MongoDBChatMessageHistory } from 'langchain/stores/message/mongodb';
-import { MongodbService } from '../mongodb/mongodb.service';
+import { MongodbService } from './mongodb.service';
 import { RedisVectorStore } from 'langchain/vectorstores/redis';
-import { RedisService } from '../redis/redis.service';
+import { RedisService } from './redis.service';
 
 @Injectable()
 export class OpenAIFactory {
@@ -167,7 +167,7 @@ export class OpenAIFactory {
     try {
       const vectorStore = await this.buildVectorStore();
       return new VectorStoreRetrieverMemory({
-        vectorStoreRetriever: vectorStore.asRetriever(3),
+        vectorStoreRetriever: vectorStore.asRetriever(1),
         inputKey: 'input',
         outputKey: 'output',
         memoryKey: 'chat_history',

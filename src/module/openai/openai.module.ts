@@ -3,11 +3,11 @@ import { OpenaiConfig } from './openai.config';
 import { OpenAIFactory } from './openai.factory';
 import { MongodbModule } from '../mongodb/mongodb.module';
 import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
-import { RedisModule } from '../redis/redis.module';
+import { RedisService } from './redis.service';
+import { MongodbService } from './mongodb.service';
 
 @Module({
-  imports: [MongodbModule, RedisModule],
-  providers: [OpenAIFactory, OpenaiConfig],
+  providers: [OpenAIFactory, OpenaiConfig, RedisService, MongodbService],
   exports: [OpenAIFactory],
 })
 export class OpenAIModule implements OnModuleInit {
@@ -15,10 +15,8 @@ export class OpenAIModule implements OnModuleInit {
   async onModuleInit() {
     try {
       // const vectorStore = await this.openAIFactory.buildVectorStore();
-      // const loader = new PDFLoader('assets/full_cv.pdf');
-      // const docs = await loader.load();
-      // const upload = await vectorStore.addDocuments(docs);
-      // console.log(upload);
+      // const similarity = await vectorStore.similaritySearch('jendy', 1);
+      // console.log(similarity);
     } catch (err) {
       console.log(err);
     }
