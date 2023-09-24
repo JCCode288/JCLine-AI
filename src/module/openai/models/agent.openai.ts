@@ -12,7 +12,6 @@ import {
   HumanMessagePromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
-import { BaseMemory } from 'langchain/memory';
 
 export class AgentOpenAI extends BaseOpenAI {
   public override readonly model: ChatOpenAI;
@@ -116,7 +115,7 @@ export class AgentOpenAI extends BaseOpenAI {
       const prompt = ChatPromptTemplate.fromMessages([
         ...templates,
         HumanMessagePromptTemplate.fromTemplate(
-          `Begin! You have to remember above instructions.\nHere's your latest history with user : [{chat_history}]\nQuestion: {input} Thought:`,
+          `Begin! You have to remember above instructions.\nHere's your latest history with user : [{chat_history}]\n\nQuestion: {input}\nThought:`,
         ),
       ]);
 

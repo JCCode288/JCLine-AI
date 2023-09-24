@@ -9,7 +9,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: [/^http:\/\/localhost:(.*)/is, /(.*)line(.*)/is, /(openai)/is],
+    origin: [/(.*)line(.*)/is, /(openai)/is],
     methods: 'GET,POST',
     preflightContinue: false,
   });
