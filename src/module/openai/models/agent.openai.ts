@@ -1,6 +1,6 @@
 import { Tool } from 'langchain/tools';
 import { BaseOpenAI } from './base.openai';
-import { IAgentArgs } from '../interfaces/agent.intefaces';
+import { IAgentArgs, IAgentStrategy } from '../interfaces/agent.intefaces';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { OpenAI } from 'langchain/llms/openai';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
@@ -13,7 +13,7 @@ import {
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
 
-export class AgentOpenAI extends BaseOpenAI {
+export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
   public override readonly model: ChatOpenAI;
   public type = 'AGENT';
   public tool_model: OpenAI;
@@ -23,6 +23,7 @@ export class AgentOpenAI extends BaseOpenAI {
   private persona?: string;
   private prefix?: string;
   private suffix?: string;
+  private contextMemory;
 
   private agent;
 
@@ -49,9 +50,25 @@ export class AgentOpenAI extends BaseOpenAI {
     this.logger.log('AgentOpenAI Built!', AgentOpenAI.name);
   }
 
+  setVectorStore<T>(vectorStore: T): Promise<T> {
+    try {
+      this.contextMemory = vectorStore;
+
+      return Promise.resolve(this.contextMemory as T);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async promptAnswer(input: string): Promise<string> {
     try {
-      const { output } = await this.agent.call({ input });
+      let context;
+
+      if (this.contextMemory) {
+        context = await this.contextMemory.search(input);
+      }
+
+      const { output } = await this.agent.call({ input, context });
 
       return output;
     } catch (err) {
@@ -115,7 +132,7 @@ export class AgentOpenAI extends BaseOpenAI {
       const prompt = ChatPromptTemplate.fromMessages([
         ...templates,
         HumanMessagePromptTemplate.fromTemplate(
-          `Begin! You have to remember above instructions.\nHere's your latest history with user : [{chat_history}]\n\nQuestion: {input}\nThought:`,
+          `Begin! You have to remember above instructions.\nHere's your latest history with user: \n[{chat_history}]\n\nHere's some context about the conversation that MIGHT be helpful, don't use it if it is out of context: \n{context}\n\nQuestion: {input}\nThought:`,
         ),
       ]);
 

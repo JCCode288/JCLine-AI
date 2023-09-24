@@ -51,7 +51,10 @@ export class OpenAIFactory {
     try {
       if (type === 'agent') {
         const model: ChatOpenAI = await this.getModel(type);
-        const memory = await this.buildVectorMemory();
+        const memory = await this.buildBufferWindowMemory(
+          options['sessionId'],
+          true,
+        );
 
         const agentOpts: IAgentArgs = {
           ...options,
@@ -60,14 +63,16 @@ export class OpenAIFactory {
           tools,
           model,
         };
+
         return new AgentOpenAI(agentOpts);
       }
 
       if (type === 'embedding') {
-        const model: OpenAIEmbeddings = await this.getModel('embedding');
+        const vectorStore = await this.buildVectorStore();
+
         const embeddingOptions: IEmbeddingArgs = {
           verbose: options?.verbose,
-          model,
+          vectorStore,
         };
 
         return new EmbeddingOpenAI(embeddingOptions);
@@ -179,10 +184,10 @@ export class OpenAIFactory {
 
   async buildVectorStore() {
     try {
-      const embedding = await this.build('embedding', null);
+      const model = await this.getModel('embedding');
       const client = this.redisService.getClient();
 
-      const vectorStore = new RedisVectorStore(embedding.model, {
+      const vectorStore = new RedisVectorStore(model, {
         redisClient: client,
         indexName: 'docs',
       });

@@ -13,3 +13,7 @@ export interface IAgentArgs {
   memory?: BaseMemory;
   sessionId?: string;
 }
+
+export interface IAgentStrategy {
+  setVectorStore<T>(vectorStore: T): Promise<T>;
+}
