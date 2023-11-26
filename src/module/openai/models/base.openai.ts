@@ -5,7 +5,7 @@ import {
 } from 'langchain/chat_models/base';
 import { IOpenAI } from '../interfaces/openai.interface';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { BaseMemory } from 'langchain/dist/memory/base';
+import { BaseMemory } from 'langchain/memory';
 
 export abstract class BaseOpenAI implements IOpenAI {
   protected readonly logger = new Logger();

@@ -6,12 +6,20 @@ import { OpenAI } from 'langchain/llms/openai';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
 import { initializeAgentExecutorWithOptions } from 'langchain/agents';
 import { IAgentType, agent_type } from 'src/utils/agent.constant';
-import { ConversationChain } from 'langchain/chains';
+import { ConversationChain, LLMChain, SequentialChain } from 'langchain/chains';
 import {
   ChatPromptTemplate,
   HumanMessagePromptTemplate,
+  PromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
+import {
+  CONTEXT_CHAIN_TEMPLATE,
+  HUMAN_PROMPT_TEMPLATE,
+  MAIN_CHAIN_TEMPLATE,
+  STEPBACK_CHAIN_TEMPLATE,
+  THOUGHT_CHAIN_TEMPLATE,
+} from './templates/chain.template';
 
 export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
   public override readonly model: ChatOpenAI;
@@ -24,7 +32,10 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
   private prefix?: string;
   private suffix?: string;
   private contextMemory;
-
+  private contextChain?;
+  private thoughtChain?;
+  private stepbackChain?;
+  private mainChain?;
   private agent;
 
   constructor({
@@ -60,15 +71,21 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
     }
   }
 
+  getAgent() {
+    return this.agent;
+  }
+
   async promptAnswer(input: string): Promise<string> {
     try {
-      let context;
+      let documents;
 
       if (this.contextMemory) {
-        context = await this.contextMemory.search(input);
+        documents = await this.contextMemory.search(input);
       }
 
-      const { output } = await this.agent.call({ input, context });
+      const agent = this.agent ?? this.mainChain;
+
+      const { output } = await agent.call({ input, documents });
 
       return output;
     } catch (err) {
@@ -76,7 +93,7 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
     }
   }
 
-  async buildAgent(type: keyof IAgentType) {
+  async buildAgent(type: IAgentType) {
     try {
       const agentType = agent_type[type];
       const agentArgs: any = {};
@@ -111,11 +128,124 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
     }
   }
 
+  async buildSequentialChain() {
+    try {
+      await Promise.all([
+        this.buildStepbackChain(),
+        this.buildContextChain(),
+        this.buildThoughtChain(),
+        this.buildMainChain(),
+      ]);
+
+      const chains = [
+        this.stepbackChain,
+        this.thoughtChain,
+        this.contextChain,
+        this.mainChain,
+      ];
+
+      this.agent = new SequentialChain({
+        chains,
+        inputVariables: ['input', 'documents'],
+        verbose: this.verbose,
+        memory: this.memory,
+      });
+
+      return this;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async buildStepbackChain() {
+    try {
+      const template = `${BASE_PERSONA}\n\n${STEPBACK_CHAIN_TEMPLATE}`;
+
+      const prompt = new PromptTemplate({
+        template,
+        inputVariables: ['input'],
+      });
+
+      this.stepbackChain = new LLMChain({
+        llm: this.model,
+        prompt,
+        verbose: this.verbose,
+        outputKey: 'stepback',
+      });
+
+      return this;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async buildThoughtChain() {
+    try {
+      const template = `${BASE_PERSONA}\n\n${THOUGHT_CHAIN_TEMPLATE}`;
+
+      const prompt = new PromptTemplate({
+        template,
+        inputVariables: ['input', 'stepback'],
+      });
+
+      this.thoughtChain = new LLMChain({
+        llm: this.model,
+        prompt,
+        verbose: this.verbose,
+        outputKey: 'thought',
+      });
+
+      return this;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async buildContextChain() {
+    try {
+      const template = `${BASE_PERSONA}\n\n${CONTEXT_CHAIN_TEMPLATE}`;
+
+      const prompt = new PromptTemplate({
+        template,
+        inputVariables: ['input', 'documents', 'stepback', 'thought'],
+      });
+
+      this.contextChain = new LLMChain({
+        llm: this.model,
+        prompt,
+        verbose: this.verbose,
+        outputKey: 'context',
+      });
+
+      return this;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async buildMainChain() {
+    try {
+      const template = `${BASE_PERSONA}\n\n${MAIN_CHAIN_TEMPLATE}`;
+
+      const prompt = new PromptTemplate({
+        template,
+        inputVariables: ['input', 'stepback', 'thought', 'context'],
+      });
+
+      this.mainChain = new LLMChain({
+        llm: this.model,
+        memory: this.memory,
+        prompt,
+        outputKey: 'output',
+      });
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async buildChain() {
     try {
       const memory = this.memory;
-
-      console.log(memory, '<<<<< Memory');
 
       const templates = this.chainTemplate.reduce(
         (base = [], templateMessage) => {
@@ -131,12 +261,10 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
 
       const prompt = ChatPromptTemplate.fromMessages([
         ...templates,
-        HumanMessagePromptTemplate.fromTemplate(
-          `Begin! You have to remember above instructions.\nHere's your latest history with user: \n[{chat_history}]\n\nHere's some context about the conversation that MIGHT be helpful, don't use it if it is out of context: \n{context}\n\nQuestion: {input}\nThought:`,
-        ),
+        HumanMessagePromptTemplate.fromTemplate(HUMAN_PROMPT_TEMPLATE),
       ]);
 
-      this.agent = new ConversationChain({
+      this.mainChain = new ConversationChain({
         llm: this.model,
         memory,
         prompt,
