@@ -1,5 +1,4 @@
-import { Controller, Post, Logger, Body, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Post, Logger, Body, UseGuards } from '@nestjs/common';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 import { LineService } from './line.service';
 import { WebhookGuard } from './webhook-guard/webhook.guard';
