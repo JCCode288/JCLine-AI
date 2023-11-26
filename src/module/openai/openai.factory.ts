@@ -32,7 +32,7 @@ export class OpenAIFactory {
   async build(
     type: 'agent',
     tools: (StructuredTool | Tool)[] | [],
-    options?: Partial<Omit<IAgentArgs, 'model'>>,
+    options: Partial<Omit<IAgentArgs, 'model'>>,
   ): Promise<AgentOpenAI>;
 
   async build(

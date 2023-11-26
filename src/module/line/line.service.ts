@@ -9,7 +9,7 @@ export class LineService {
 
   constructor(private readonly lineWebhookService: LineWebhookService) {}
 
-  async handleMessage(body: LineWebhookDto, signature: string) {
+  async handleMessage(body: LineWebhookDto) {
     try {
       const topEvent = body.events[0];
       const message = topEvent?.message;
@@ -23,18 +23,6 @@ export class LineService {
       }
 
       this.logger.log(message, LineService.name + ' Webhook Post');
-
-      const validate = await this.lineWebhookService.verifyMessage(
-        JSON.stringify(body),
-        signature,
-      );
-
-      if (
-        (!info.replyToken && !info.userId) ||
-        (message.type !== 'text' && !message.text && !validate)
-      ) {
-        return { msg: 'OK' };
-      }
 
       const aiMessage = await this.lineWebhookService.handleMessage(
         message.text,

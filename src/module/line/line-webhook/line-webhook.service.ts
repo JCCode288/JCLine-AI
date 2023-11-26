@@ -28,8 +28,9 @@ export class LineWebhookService {
       const vectorStore = await this.openAIFactory.build('embedding', null);
 
       await agentOpenAI.setVectorStore(vectorStore);
-      const chain = await agentOpenAI.buildChain();
-      const response = await chain.promptAnswer(message);
+      const agent = await agentOpenAI.buildSequentialChain();
+
+      const response = await agent.promptAnswer(message);
 
       return response;
     } catch (err) {
@@ -39,8 +40,6 @@ export class LineWebhookService {
   }
 
   verifyMessage(body: string, header_sign: string): Promise<boolean> {
-    this.logger.log(body, 'Stringified Body');
-    this.logger.log(header_sign, 'Header Sign');
     return new Promise((res, rej) => {
       const error = new HttpException(
         'Message verificatiton failed',
