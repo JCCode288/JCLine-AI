@@ -4,7 +4,7 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
-ARG NODE_VERSION=18.16.1
+ARG NODE_VERSION=18.17.0
 
 ################################################################################
 # Use node image for base image for all stages.
@@ -25,7 +25,7 @@ FROM base as deps
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+    npm install --omit=dev
 
 ################################################################################
 # Create a stage for building the application.
@@ -36,12 +36,12 @@ FROM deps as build
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
     --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm install
 
 # Copy the rest of the source files into the image.
 COPY . .
 # Run the build script.
-RUN npm run build
+RUN npx @nestjs/cli build
 
 ################################################################################
 # Create a new stage to run the application with minimal runtime dependencies
@@ -67,4 +67,4 @@ COPY --from=build /usr/src/app/dist ./dist
 EXPOSE 3000
 
 # Run the application.
-CMD npm run start:prod
+CMD npx @nestjs/cli start:prod
