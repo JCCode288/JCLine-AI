@@ -19,7 +19,7 @@ export class LineController {
 
       return response;
     } catch (err) {
-      this.logger.log(err, LineController.name + ' postLineWebhook');
+      console.log(err, 'Webhook Error');
 
       return err;
     }

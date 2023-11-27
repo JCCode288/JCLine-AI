@@ -47,7 +47,7 @@ export class LineWebhookService {
       );
       try {
         const signature = this.crypto
-          .createHmac('SHA256', this.line_secret.secret)
+          .createHmac('SHA256', this.line_secret.channel)
           .update(body)
           .digest('base64');
 
