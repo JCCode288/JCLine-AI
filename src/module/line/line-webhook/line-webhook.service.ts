@@ -51,8 +51,6 @@ export class LineWebhookService {
           .update(body)
           .digest('base64');
 
-        this.logger.log({ signature }, 'Signature Body');
-
         if (signature !== header_sign) {
           res(false);
         }
