@@ -1,10 +1,16 @@
-import { Controller, Post, Logger, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Logger,
+  Body,
+  UseInterceptors,
+} from '@nestjs/common';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 import { LineService } from './line.service';
 import { WebhookGuard } from './webhook-guard/webhook.guard';
 
 @Controller('line')
-@UseGuards(WebhookGuard)
+@UseInterceptors(WebhookGuard)
 export class LineController {
   private readonly logger = new Logger();
   constructor(private readonly lineService: LineService) {}
