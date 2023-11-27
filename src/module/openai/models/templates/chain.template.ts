@@ -15,21 +15,9 @@ The format you need to complete is as follows:
 input: "{input}"
 stepback: "{stepback}"
 thought: "{thought}"
-context: "{context}"
 response: "(You are expected to only fill this area)"
 </format>
-Only reponse with your constructed response. Avoid giving whole format.`;
-
-export const CONTEXT_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
-You need to construct a thorough response explanation from input and the context you got. 
-<format>
-input: "{input}"
-documents: {documents}
-stepback: "{stepback}"
-thought: "{thought}"
-context: "(You are expected to only fill this area)"
-</format>
-Only reponse with your constructed context. Avoid giving whole format.`;
+Only reponse with your constructed response to the instructed line. Avoid giving whole format.`;
 
 export const THOUGHT_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
 You need to response based from input and give your thought about how to response the input based from the stepback (paraphrase question from your thought).
@@ -39,13 +27,18 @@ input: "{input}"
 stepback: "{stepback}"
 thought: "(You are expected to only fill this area)"
 </format>
-Only reponse with your constructed thought. Avoid giving whole format.`;
+Only reponse with your constructed thought to the instructed line. Avoid giving whole format.`;
 
 export const STEPBACK_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
 Stepback is a paraphrase question from breakdown of an input. You are expected to give response from an input in form of a stepback question. 
 The format you need to complete is as follows: 
 <format>
 input: "{input}"
-stepback: "(You are expected to only fill this area)"
+stepback: "(You are expected to only fill this line)"
 </format>
-Only reponse with your constructed stepback. Avoid giving whole format.`;
+Only reponse with your constructed stepback to the instructed line. Avoid giving whole format.`;
+
+export const DOCUMENT_TEMPLATE = `Here's some document that might give you better insight:
+<document>
+{documents}
+</document>`;
