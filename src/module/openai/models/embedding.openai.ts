@@ -45,10 +45,26 @@ export class EmbeddingOpenAI {
     try {
       const context = await this.vectorStore.similaritySearchWithScore(
         input,
-        1,
+        3,
       );
 
-      return context[0][0].pageContent;
+      const mappedContext = context.map((el) => {
+        console.log(el[0].metadata);
+        return el[0].pageContent;
+      });
+
+      const stringifiedContext = mappedContext.reduce(
+        (base = '', context: string, idx: number) => {
+          const parsedString = context.replaceAll('\n', ' ');
+
+          base += `${idx}. ` + parsedString + '\n';
+
+          return base;
+        },
+        '',
+      );
+
+      return stringifiedContext;
     } catch (err) {
       throw err;
     }

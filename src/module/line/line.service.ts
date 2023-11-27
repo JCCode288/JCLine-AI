@@ -29,9 +29,9 @@ export class LineService {
         signature,
       );
 
-      if (!isValid || (!message && topEvent.type !== 'message')) {
-        return { event: 'OK' };
-      }
+      // if (!isValid || (!message && topEvent.type !== 'message')) {
+      //   return { event: 'OK' };
+      // }
 
       this.logger.log(message, LineService.name + ' Webhook Post');
 
