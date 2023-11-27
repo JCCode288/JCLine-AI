@@ -10,13 +10,15 @@ import { ConversationChain, LLMChain, SequentialChain } from 'langchain/chains';
 import {
   ChatPromptTemplate,
   HumanMessagePromptTemplate,
+  MessagesPlaceholder,
   PromptTemplate,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
 import {
-  CONTEXT_CHAIN_TEMPLATE,
+  DOCUMENT_TEMPLATE,
   HUMAN_PROMPT_TEMPLATE,
   MAIN_CHAIN_TEMPLATE,
+  MEMORY_PREFIX,
   STEPBACK_CHAIN_TEMPLATE,
   THOUGHT_CHAIN_TEMPLATE,
 } from './templates/chain.template';
@@ -32,7 +34,6 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
   private prefix?: string;
   private suffix?: string;
   private contextMemory;
-  private contextChain?;
   private thoughtChain?;
   private stepbackChain?;
   private mainChain?;
@@ -132,17 +133,11 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
     try {
       await Promise.all([
         this.buildStepbackChain(),
-        this.buildContextChain(),
         this.buildThoughtChain(),
         this.buildMainChain(),
       ]);
 
-      const chains = [
-        this.stepbackChain,
-        this.thoughtChain,
-        this.contextChain,
-        this.mainChain,
-      ];
+      const chains = [this.stepbackChain, this.thoughtChain, this.mainChain];
 
       this.agent = new SequentialChain({
         chains,
@@ -159,11 +154,16 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
 
   async buildStepbackChain() {
     try {
-      const template = `${BASE_PERSONA}\n\n${STEPBACK_CHAIN_TEMPLATE}`;
+      const promptMessages = [
+        SystemMessagePromptTemplate.fromTemplate(BASE_PERSONA),
+        SystemMessagePromptTemplate.fromTemplate(DOCUMENT_TEMPLATE),
+        new MessagesPlaceholder('chat_history'),
+        HumanMessagePromptTemplate.fromTemplate(STEPBACK_CHAIN_TEMPLATE),
+      ];
 
-      const prompt = new PromptTemplate({
-        template,
-        inputVariables: ['input'],
+      const prompt = new ChatPromptTemplate({
+        promptMessages,
+        inputVariables: ['input', 'documents', 'chat_history'],
       });
 
       this.stepbackChain = new LLMChain({
@@ -181,11 +181,16 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
 
   async buildThoughtChain() {
     try {
-      const template = `${BASE_PERSONA}\n\n${THOUGHT_CHAIN_TEMPLATE}`;
+      const promptMessages = [
+        SystemMessagePromptTemplate.fromTemplate(BASE_PERSONA),
+        SystemMessagePromptTemplate.fromTemplate(DOCUMENT_TEMPLATE),
+        new MessagesPlaceholder('chat_history'),
+        HumanMessagePromptTemplate.fromTemplate(THOUGHT_CHAIN_TEMPLATE),
+      ];
 
-      const prompt = new PromptTemplate({
-        template,
-        inputVariables: ['input', 'stepback'],
+      const prompt = new ChatPromptTemplate({
+        promptMessages,
+        inputVariables: ['input', 'documents', 'stepback', 'chat_history'],
       });
 
       this.thoughtChain = new LLMChain({
@@ -201,40 +206,29 @@ export class AgentOpenAI extends BaseOpenAI implements IAgentStrategy {
     }
   }
 
-  async buildContextChain() {
-    try {
-      const template = `${BASE_PERSONA}\n\n${CONTEXT_CHAIN_TEMPLATE}`;
-
-      const prompt = new PromptTemplate({
-        template,
-        inputVariables: ['input', 'documents', 'stepback', 'thought'],
-      });
-
-      this.contextChain = new LLMChain({
-        llm: this.model,
-        prompt,
-        verbose: this.verbose,
-        outputKey: 'context',
-      });
-
-      return this;
-    } catch (err) {
-      throw err;
-    }
-  }
-
   async buildMainChain() {
     try {
-      const template = `${BASE_PERSONA}\n\n${MAIN_CHAIN_TEMPLATE}`;
+      const promptMessages = [
+        SystemMessagePromptTemplate.fromTemplate(BASE_PERSONA),
+        SystemMessagePromptTemplate.fromTemplate(DOCUMENT_TEMPLATE),
+        SystemMessagePromptTemplate.fromTemplate(MEMORY_PREFIX),
+        new MessagesPlaceholder('chat_history'),
+        HumanMessagePromptTemplate.fromTemplate(MAIN_CHAIN_TEMPLATE),
+      ];
 
-      const prompt = new PromptTemplate({
-        template,
-        inputVariables: ['input', 'stepback', 'thought', 'context'],
+      const prompt = new ChatPromptTemplate({
+        promptMessages,
+        inputVariables: [
+          'input',
+          'stepback',
+          'thought',
+          'documents',
+          'chat_history',
+        ],
       });
 
       this.mainChain = new LLMChain({
         llm: this.model,
-        memory: this.memory,
         prompt,
         outputKey: 'output',
       });

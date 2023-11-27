@@ -51,7 +51,10 @@ export class OpenAIFactory {
     try {
       if (type === 'agent') {
         const model: ChatOpenAI = await this.getModel(type);
-        const memory = await this.buildBufferWindowMemory(options['sessionId']);
+        const memory = await this.buildBufferWindowMemory(
+          options['sessionId'],
+          true,
+        );
 
         const agentOpts: IAgentArgs = {
           ...options,
@@ -135,7 +138,7 @@ export class OpenAIFactory {
     aiPrefix?: string,
   ) {
     return new BufferWindowMemory({
-      k: 5,
+      k: 3,
       inputKey: 'input',
       outputKey: 'output',
       chatHistory: await this.buildChatMemory(userId),
@@ -169,7 +172,7 @@ export class OpenAIFactory {
     try {
       const vectorStore = await this.buildVectorStore();
       return new VectorStoreRetrieverMemory({
-        vectorStoreRetriever: vectorStore.asRetriever(1),
+        vectorStoreRetriever: vectorStore.asRetriever(3),
         inputKey: 'input',
         outputKey: 'output',
         memoryKey: 'chat_history',

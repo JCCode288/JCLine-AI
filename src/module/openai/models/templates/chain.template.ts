@@ -3,49 +3,40 @@ export const HUMAN_PROMPT_TEMPLATE = `Begin! You have to remember above instruct
 const FORMAT_PREFIX =
   'You are expected to finish a response completion from a certain format.';
 
-export const MEMORY_PREFIX = `Here is your chat history with current user:
-<memory>
-{chat_history}
-</memory>`;
+export const MEMORY_PREFIX = `Below is your chat history with current user: `;
 
 export const MAIN_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
-You need to response based from the input, thought, stepback (paraphrase question from your thought), and context of input.
-The format you need to complete is as follows:
+Your job is to give response based from the input, thought, stepback (paraphrase question from your thought), and context of input.
 <format>
+BEGIN!
 input: "{input}"
 stepback: "{stepback}"
 thought: "{thought}"
-context: "{context}"
-response: "(You are expected to only fill this area)"
+response: You are expected to only fill this line without responding full format
 </format>
-Only reponse with your constructed response. Avoid giving whole format.`;
-
-export const CONTEXT_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
-You need to construct a thorough response explanation from input and the context you got. 
-<format>
-input: "{input}"
-documents: {documents}
-stepback: "{stepback}"
-thought: "{thought}"
-context: "(You are expected to only fill this area)"
-</format>
-Only reponse with your constructed context. Avoid giving whole format.`;
+Response only with a string of your response.`;
 
 export const THOUGHT_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
-You need to response based from input and give your thought about how to response the input based from the stepback (paraphrase question from your thought).
-The format you need to complete is as follows: 
+You job is to give your thought based from input and stepback (paraphrase question from your thought).
+BEGIN!
 <format>
 input: "{input}"
 stepback: "{stepback}"
-thought: "(You are expected to only fill this area)"
+thought: You are expected to only fill this line without responding full format
 </format>
-Only reponse with your constructed thought. Avoid giving whole format.`;
+Response only with a string of your thought.`;
 
 export const STEPBACK_CHAIN_TEMPLATE = `${FORMAT_PREFIX} 
-Stepback is a paraphrase question from breakdown of an input. You are expected to give response from an input in form of a stepback question. 
-The format you need to complete is as follows: 
+Stepback is a paraphrase question from breakdown of an input.
+Your job is to give your stepback question from user input.
+BEGIN!
 <format>
 input: "{input}"
-stepback: "(You are expected to only fill this area)"
+stepback: You are expected to only fill this line without responding full format
 </format>
-Only reponse with your constructed stepback. Avoid giving whole format.`;
+Response only with a string of your stepback.`;
+
+export const DOCUMENT_TEMPLATE = `Here's some document that might give you better insight:
+<document>
+{documents}
+</document>`;
