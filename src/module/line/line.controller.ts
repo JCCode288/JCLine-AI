@@ -15,6 +15,8 @@ export class LineController {
 
       const response = await this.lineService.handleMessage(body, signature);
 
+      console.log(response);
+
       return response;
     } catch (err) {
       this.logger.log(err, LineController.name + ' postLineWebhook');
