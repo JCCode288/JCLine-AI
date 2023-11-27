@@ -9,7 +9,7 @@ export class LineService {
 
   constructor(private readonly lineWebhookService: LineWebhookService) {}
 
-  async handleMessage(body: LineWebhookDto) {
+  async handleMessage(body: LineWebhookDto, signature: string) {
     try {
       const topEvent = body.events[0];
       const message = topEvent?.message;
@@ -18,7 +18,18 @@ export class LineService {
         userId: topEvent.source.userId,
       };
 
-      if (!message && topEvent.type !== 'message') {
+      if (!signature || typeof signature !== 'string') {
+        return { message: 'OK' };
+      }
+
+      const bodyString: string = JSON.stringify(body);
+
+      const isValid = await this.lineWebhookService.verifyMessage(
+        bodyString,
+        signature,
+      );
+
+      if (!isValid || (!message && topEvent.type !== 'message')) {
         return { event: 'OK' };
       }
 

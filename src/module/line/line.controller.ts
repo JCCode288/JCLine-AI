@@ -1,24 +1,19 @@
-import {
-  Controller,
-  Post,
-  Logger,
-  Body,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Post, Logger, Body, Req } from '@nestjs/common';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 import { LineService } from './line.service';
-import { WebhookGuard } from './webhook-guard/webhook.guard';
 
 @Controller('line')
-@UseInterceptors(WebhookGuard)
 export class LineController {
   private readonly logger = new Logger();
   constructor(private readonly lineService: LineService) {}
 
   @Post('webhooks')
-  async postLineWebhook(@Body() body: LineWebhookDto) {
+  async postLineWebhook(@Body() body: LineWebhookDto, @Req() req) {
     try {
-      const response = await this.lineService.handleMessage(body);
+      const headers = req.headers;
+      const signature = headers['x-line-signature'] as string;
+
+      const response = await this.lineService.handleMessage(body, signature);
 
       return response;
     } catch (err) {
