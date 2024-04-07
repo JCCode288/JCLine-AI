@@ -5,11 +5,9 @@ import {
   ISentMessages,
   SendMessageDto,
 } from './webhook-dto/send-message.dto';
-import { OpenAIFactory } from 'src/module/openai/openai.factory';
 
 @Injectable()
 export class LineWebhookService {
-  constructor(private readonly openAIFactory: OpenAIFactory) {}
   private readonly logger = new Logger();
   private readonly crypto = _crypto;
   private readonly line_secret = {
@@ -19,25 +17,6 @@ export class LineWebhookService {
   };
   private readonly post_message_url =
     'https://api.line.me/v2/bot/message/reply';
-
-  async handleMessage(message: string, sessionId?: string) {
-    try {
-      const agentOpenAI = await this.openAIFactory.build('agent', null, {
-        sessionId,
-      });
-      const vectorStore = await this.openAIFactory.build('embedding', null);
-
-      await agentOpenAI.setVectorStore(vectorStore);
-      const agent = await agentOpenAI.buildSequentialChain();
-
-      const response = await agent.promptAnswer(message);
-
-      return response;
-    } catch (err) {
-      this.logger.log(err, LineWebhookService.name + ' handleMessage');
-      throw err;
-    }
-  }
 
   verifyMessage(body: string, header_sign: string): Promise<boolean> {
     return new Promise((res, rej) => {

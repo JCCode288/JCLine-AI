@@ -18,6 +18,14 @@ import { MongodbService } from './mongodb.service';
 import { RedisVectorStore } from 'langchain/vectorstores/redis';
 import { RedisService } from './redis.service';
 
+export type IOpenAIBuildOpts =
+  | Partial<Omit<IAgentArgs, 'model'>>
+  | Partial<Omit<IEmbeddingArgs, 'model'>>;
+
+export type IOpenAIBuildType = 'agent' | 'embedding' | 'tool';
+
+export type IOpenAIBuildTool = StructuredTool | Tool;
+
 @Injectable()
 export class OpenAIFactory {
   private agentModelName = 'gpt-3.5-turbo';
@@ -31,8 +39,8 @@ export class OpenAIFactory {
   ) {}
   async build(
     type: 'agent',
-    tools: (StructuredTool | Tool)[] | [],
-    options: Partial<Omit<IAgentArgs, 'model'>>,
+    tools: IOpenAIBuildTool[] | [],
+    options: IOpenAIBuildOpts,
   ): Promise<AgentOpenAI>;
 
   async build(
@@ -42,11 +50,9 @@ export class OpenAIFactory {
   ): Promise<EmbeddingOpenAI>;
 
   async build(
-    type: 'agent' | 'embedding' | 'tool',
-    tools: (StructuredTool | Tool)[] = [],
-    options?:
-      | Partial<Omit<IAgentArgs, 'model'>>
-      | Partial<Omit<IEmbeddingArgs, 'model'>>,
+    type: IOpenAIBuildType,
+    tools: IOpenAIBuildTool[] = [],
+    options?: IOpenAIBuildOpts,
   ) {
     try {
       if (type === 'agent') {

@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LineWebhookService } from './line-webhook/line-webhook.service';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 import { IMetaContact } from './line-webhook/webhook-dto/send-message.dto';
+import { OpenAIFactory } from '../openai/openai.factory';
 
 @Injectable()
 export class LineService {
   private readonly logger = new Logger();
 
-  constructor(private readonly lineWebhookService: LineWebhookService) {}
+  constructor(
+    private readonly lineWebhookService: LineWebhookService,
+    private readonly openAIFactory: OpenAIFactory,
+  ) {}
 
   async handleMessage(body: LineWebhookDto, signature: string) {
     try {
@@ -35,19 +39,39 @@ export class LineService {
 
       this.logger.log(message, LineService.name + ' Webhook Post');
 
-      const aiMessage = await this.lineWebhookService.handleMessage(
-        message.text,
-        info.userId,
-      );
+      const aiMessage = await this.prompt(message.text, info.userId);
 
       const send_message = await this.lineWebhookService.sendMessage({
         info,
         message: aiMessage,
       });
+
       this.logger.log(aiMessage, LineService.name + ' Webhook Post');
 
       return { response: 'OK', send_message };
     } catch (err) {
+      throw err;
+    }
+  }
+
+  private async prompt(
+    message: string,
+    sessionId: string = new Date().toUTCString(),
+  ) {
+    try {
+      const agentOpenAI = await this.openAIFactory.build('agent', null, {
+        sessionId,
+      });
+      const vectorStore = await this.openAIFactory.build('embedding', null);
+
+      await agentOpenAI.setVectorStore(vectorStore);
+      const agent = await agentOpenAI.buildSequentialChain();
+
+      const response = await agent.promptAnswer(message);
+
+      return response;
+    } catch (err) {
+      this.logger.log(err, LineWebhookService.name + ' handleMessage');
       throw err;
     }
   }
