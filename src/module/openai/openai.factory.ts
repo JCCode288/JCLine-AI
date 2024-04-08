@@ -8,7 +8,6 @@ import {
   EntityMemory,
   VectorStoreRetrieverMemory,
 } from 'langchain/memory';
-import { BaseChatMessageHistory } from '@langchain/core/chat_history';
 import { MongoDBChatMessageHistory } from '@langchain/mongodb';
 import { MongodbService } from './mongodb.service';
 import { RedisVectorStore } from '@langchain/redis';
@@ -16,6 +15,7 @@ import { RedisService } from './redis.service';
 import {
   ChatPromptTemplate,
   HumanMessagePromptTemplate,
+  MessagesPlaceholder,
   SystemMessagePromptTemplate,
 } from 'langchain/prompts';
 import { BASE_PERSONA } from 'src/utils/persona.constant';
@@ -46,6 +46,7 @@ export class OpenAIFactory {
       ChatPromptTemplate.fromMessages([
         SystemMessagePromptTemplate.fromTemplate(BASE_PERSONA),
         SystemMessagePromptTemplate.fromTemplate(templates.system),
+        new MessagesPlaceholder('chat_history'),
         HumanMessagePromptTemplate.fromTemplate(templates.human),
       ]).partial({ format_instructions: outputParser.getFormatInstructions() }),
       this.getModel('agent'),

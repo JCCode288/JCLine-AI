@@ -24,12 +24,25 @@ export class ChainService implements OnModuleInit {
     const question = message;
 
     try {
-      const { retrievalChain, explanationChain, stepbackChain, responseChain } =
-        await this.chainRepo.buildStepbackChains();
+      const {
+        retrievalChain,
+        explanationChain,
+        stepbackChain,
+        responseChain,
+        categorizerChain,
+      } = await this.chainRepo.buildStepbackChains();
 
-      const callConfig = { configurable: { sessionId: userId } };
+      const { isGeneralKnowledge, smallTalk } = await categorizerChain.invoke(
+        { question },
+        { configurable: { sessionId: `${userId}:categorizer` } },
+      );
 
-      const retrieval = await retrievalChain.invoke({ question }, callConfig);
+      if (isGeneralKnowledge) return smallTalk;
+
+      const retrieval = await retrievalChain.invoke(
+        { question },
+        { configurable: { sessionId: `${userId}:retrieval` } },
+      );
 
       let { knowledge } = retrieval;
       knowledge = await this.handleRetrieval(knowledge);
@@ -39,7 +52,7 @@ export class ChainService implements OnModuleInit {
           question,
           knowledge,
         },
-        callConfig,
+        { configurable: { sessionId: `${userId}:explanation` } },
       );
 
       const { isEnough, stepback } = await stepbackChain.invoke(
@@ -47,7 +60,7 @@ export class ChainService implements OnModuleInit {
           question,
           explanation,
         },
-        callConfig,
+        { configurable: { sessionId: `${userId}:explanation` } },
       );
 
       if (!isEnough && count < this.limit) {
@@ -62,7 +75,7 @@ export class ChainService implements OnModuleInit {
           knowledge,
           explanation,
         },
-        callConfig,
+        { configurable: { sessionId: userId } },
       );
 
       return response;
@@ -77,7 +90,9 @@ export class ChainService implements OnModuleInit {
       2,
     );
 
-    if (score < 0.4) return 'Nothing Similar';
+    console.log({ data, score }, '<< SIMILARIY SEARCH');
+
+    if (score < 0.05) return 'Nothing Similar';
 
     console.log(data.metadata, '<<< Document Metadata');
 

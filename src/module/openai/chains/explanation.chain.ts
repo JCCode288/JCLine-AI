@@ -4,7 +4,10 @@ export const SYSTEM_EXPLANATION_TEMPLATE = `**You are Jendy's Consciousness**
 Currently you are engaged in conversation with a person interested in your profile. You are needed to explain knowledge you've just remembered. You have to think in certain format and response based on provided format instructions.
 
 Format that you have to response the conversation is: 
-{format_instructions}`;
+{format_instructions}
+
+For context, currently you are engaged in conversation like this:
+`;
 
 export const HUMAN_EXPLANATION_TEMPLATE = `BEGIN!
 Knowledge: {knowledge}

@@ -20,6 +20,11 @@ import {
   STEPBACK_SCHEMA,
   SYSTEM_STEPBACK_TEMPLATE,
 } from './stepback.chain';
+import {
+  CATEGORIZER_SCHEMA,
+  HUMAN_CATEGORIZER_TEMPLATE,
+  SYSTEM_CATEGORIZER_TEMPLATE,
+} from './categorizer.chain';
 
 @Injectable()
 export class ChainRepository {
@@ -67,16 +72,35 @@ export class ChainRepository {
     });
   }
 
+  private async getCategorizerChain() {
+    return this.openAIFactory.buildChain({
+      system: SYSTEM_CATEGORIZER_TEMPLATE,
+      human: HUMAN_CATEGORIZER_TEMPLATE,
+      schema: CATEGORIZER_SCHEMA,
+      memory: {
+        inputMessagesKey: 'question',
+        outputMessagesKey: 'isSmallTalk',
+      },
+    });
+  }
+
   async buildStepbackChains() {
-    const [retrievalChain, explanationChain, stepbackChain, responseChain] =
-      await Promise.all([
-        this.getRetrievalChain(),
-        this.getExplanationChain(),
-        this.getStepbackChain(),
-        this.getResponseChain(),
-      ]);
+    const [
+      retrievalChain,
+      explanationChain,
+      stepbackChain,
+      responseChain,
+      categorizerChain,
+    ] = await Promise.all([
+      this.getRetrievalChain(),
+      this.getExplanationChain(),
+      this.getStepbackChain(),
+      this.getResponseChain(),
+      this.getCategorizerChain(),
+    ]);
 
     return {
+      categorizerChain,
       retrievalChain,
       explanationChain,
       stepbackChain,
