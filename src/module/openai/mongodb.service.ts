@@ -8,7 +8,7 @@ export class MongodbService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    super(process.env.MONGO_DB_URI || '');
+    super(process.env.MONGO_DB_URI || 'mongodb://127.0.0.1:27017/');
   }
   async onModuleInit() {
     try {

@@ -1,25 +1,20 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { OpenaiConfig } from './openai.config';
 import { OpenAIFactory } from './openai.factory';
 import { RedisService } from './redis.service';
 import { MongodbService } from './mongodb.service';
-// import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
-// import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { ChainService } from './chains/chain.service';
+import { ChainRepository } from './chains/chain.repository';
 
 @Module({
-  providers: [OpenAIFactory, OpenaiConfig, RedisService, MongodbService],
-  exports: [OpenAIFactory],
+  providers: [
+    OpenAIFactory,
+    OpenaiConfig,
+    RedisService,
+    MongodbService,
+    ChainService,
+    ChainRepository,
+  ],
+  exports: [ChainService],
 })
-export class OpenAIModule implements OnModuleInit {
-  constructor(private readonly openAIFactory: OpenAIFactory) {}
-  async onModuleInit() {
-    try {
-      // const embedding = await this.openAIFactory.build('embedding', null);
-      // await embedding.injectPDF('assets/full_cv.pdf');
-      // const context = await embedding.search('pengalaman kerja');
-      // console.log(context, '<<<< Context');
-    } catch (err) {
-      console.log(err);
-    }
-  }
-}
+export class OpenAIModule {}
