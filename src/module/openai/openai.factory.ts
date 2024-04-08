@@ -1,30 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { OpenaiConfig } from './openai.config';
-import { IAgentArgs } from './interfaces/agent.intefaces';
-import { IEmbeddingArgs } from './interfaces/embedding.interface';
-import { AgentOpenAI } from './models/agent.openai';
-import { EmbeddingOpenAI } from './models/embedding.openai';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { OpenAI } from 'langchain/llms/openai';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { StructuredTool, Tool } from 'langchain/tools';
 import {
   BufferWindowMemory,
   EntityMemory,
   VectorStoreRetrieverMemory,
 } from 'langchain/memory';
-import { MongoDBChatMessageHistory } from 'langchain/stores/message/mongodb';
+import { BaseChatMessageHistory } from '@langchain/core/chat_history';
+import { MongoDBChatMessageHistory } from '@langchain/mongodb';
 import { MongodbService } from './mongodb.service';
-import { RedisVectorStore } from 'langchain/vectorstores/redis';
+import { RedisVectorStore } from '@langchain/redis';
 import { RedisService } from './redis.service';
-
-export type IOpenAIBuildOpts =
-  | Partial<Omit<IAgentArgs, 'model'>>
-  | Partial<Omit<IEmbeddingArgs, 'model'>>;
-
-export type IOpenAIBuildType = 'agent' | 'embedding' | 'tool';
-
-export type IOpenAIBuildTool = StructuredTool | Tool;
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  SystemMessagePromptTemplate,
+} from 'langchain/prompts';
+import { BASE_PERSONA } from 'src/utils/persona.constant';
+import { IChainTemplate, IMemoryOpts } from './interfaces/openai.interface';
+import { z } from 'zod';
+import { StructuredOutputParser } from 'langchain/output_parsers';
+import {
+  RunnableSequence,
+  RunnableWithMessageHistory,
+} from '@langchain/core/runnables';
 
 @Injectable()
 export class OpenAIFactory {
@@ -37,68 +38,49 @@ export class OpenAIFactory {
     private readonly mongodbService: MongodbService,
     private readonly redisService: RedisService,
   ) {}
-  async build(
-    type: 'agent',
-    tools: IOpenAIBuildTool[] | [],
-    options: IOpenAIBuildOpts,
-  ): Promise<AgentOpenAI>;
 
-  async build(
-    type: 'embedding',
-    tools: [],
-    options?: Partial<Omit<IEmbeddingArgs, 'model'>>,
-  ): Promise<EmbeddingOpenAI>;
+  async buildChain<T extends z.ZodRawShape>(templates: IChainTemplate<T>) {
+    const outputParser = new StructuredOutputParser(templates.schema);
 
-  async build(
-    type: IOpenAIBuildType,
-    tools: IOpenAIBuildTool[] = [],
-    options?: IOpenAIBuildOpts,
-  ) {
-    try {
-      if (type === 'agent') {
-        const model: ChatOpenAI = await this.getModel(type);
-        const memory = await this.buildBufferWindowMemory(
-          options['sessionId'],
-          true,
-        );
+    const [prompt, model] = await Promise.all([
+      ChatPromptTemplate.fromMessages([
+        SystemMessagePromptTemplate.fromTemplate(BASE_PERSONA),
+        SystemMessagePromptTemplate.fromTemplate(templates.system),
+        HumanMessagePromptTemplate.fromTemplate(templates.human),
+      ]).partial({ format_instructions: outputParser.getFormatInstructions() }),
+      this.getModel('agent'),
+    ]);
 
-        const agentOpts: IAgentArgs = {
-          ...options,
-          memory,
-          verbose: true,
-          tools,
-          model,
-        };
+    const chain = RunnableSequence.from([prompt, model, outputParser]);
 
-        return new AgentOpenAI(agentOpts);
-      }
+    if (templates.memory) {
+      const { inputMessagesKey, outputMessagesKey } = templates.memory;
 
-      if (type === 'embedding') {
-        const vectorStore = await this.buildVectorStore();
-
-        const embeddingOptions: IEmbeddingArgs = {
-          verbose: options?.verbose,
-          vectorStore,
-        };
-
-        return new EmbeddingOpenAI(embeddingOptions);
-      }
-    } catch (err) {
-      throw err;
+      return new RunnableWithMessageHistory({
+        runnable: chain,
+        getMessageHistory: (sessionId: string) =>
+          this.buildChatMemory(sessionId),
+        inputMessagesKey,
+        outputMessagesKey,
+        historyMessagesKey: 'chat_history',
+      });
     }
+
+    return chain;
   }
 
   private getModel(type: 'agent'): Promise<ChatOpenAI>;
-
   private getModel(type: 'embedding'): Promise<OpenAIEmbeddings>;
-
   private getModel(type: 'tool'): Promise<OpenAI>;
-
   private async getModel(type: 'agent' | 'embedding' | 'tool') {
     if (type === 'agent') {
       return new ChatOpenAI({
         ...(await this.openAIConfig.getAgentConfig()),
         modelName: this.agentModelName,
+      }).bind({
+        response_format: {
+          type: 'json_object',
+        },
       });
     }
 
@@ -138,19 +120,21 @@ export class OpenAIFactory {
     }
   }
 
-  async buildBufferWindowMemory(
-    userId: string,
+  async buildBufferWindowMemory({
+    userId,
+    inputKey = 'input',
+    outputKey = 'output',
     returnMessages = false,
-    aiPrefix?: string,
-  ) {
+    aiPrefix = 'JendAI',
+  }: IMemoryOpts) {
     return new BufferWindowMemory({
-      k: 3,
-      inputKey: 'input',
-      outputKey: 'output',
+      k: 8,
+      inputKey,
+      outputKey,
       chatHistory: await this.buildChatMemory(userId),
       memoryKey: 'chat_history',
       returnMessages,
-      aiPrefix: aiPrefix ?? 'JendAI',
+      aiPrefix,
     });
   }
 
@@ -174,13 +158,13 @@ export class OpenAIFactory {
     }
   }
 
-  async buildVectorMemory() {
+  async buildVectorMemory(opts: IMemoryOpts) {
     try {
       const vectorStore = await this.buildVectorStore();
       return new VectorStoreRetrieverMemory({
         vectorStoreRetriever: vectorStore.asRetriever(3),
-        inputKey: 'input',
-        outputKey: 'output',
+        inputKey: opts.inputKey ?? 'input',
+        outputKey: opts.outputKey ?? 'output',
         memoryKey: 'chat_history',
       });
     } catch (err) {
