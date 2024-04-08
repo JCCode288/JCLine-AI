@@ -5,7 +5,7 @@ import * as _jwt from 'jsonwebtoken';
 export class JwtService {
   private readonly logger = new Logger();
   private readonly jwt = _jwt;
-  private readonly jwt_secret = process.env.JWT_SECRET;
+  private readonly jwt_secret = process.env.JWT_SECRET ?? 'No Secret';
   encrypt(data) {
     try {
       if (!data || typeof data !== 'string') {

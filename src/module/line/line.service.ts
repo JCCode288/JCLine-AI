@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LineWebhookService } from './line-webhook/line-webhook.service';
 import { LineWebhookDto } from './line-webhook/webhook-dto/webhook.dto';
 import { IMetaContact } from './line-webhook/webhook-dto/send-message.dto';
-import { OpenAIFactory } from '../openai/openai.factory';
+import { ChainService } from '../openai/chains/chain.service';
 
 @Injectable()
 export class LineService {
@@ -10,7 +10,7 @@ export class LineService {
 
   constructor(
     private readonly lineWebhookService: LineWebhookService,
-    private readonly openAIFactory: OpenAIFactory,
+    private readonly gptChain: ChainService,
   ) {}
 
   async handleMessage(body: LineWebhookDto, signature: string) {
@@ -26,16 +26,16 @@ export class LineService {
         return { message: 'OK' };
       }
 
-      const bodyString: string = JSON.stringify(body);
+      // const bodyString: string = JSON.stringify(body);
 
-      const isValid = await this.lineWebhookService.verifyMessage(
-        bodyString,
-        signature,
-      );
+      // const isValid = await this.lineWebhookService.verifyMessage(
+      //   bodyString,
+      //   signature,
+      // );
 
-      if (!isValid || (!message && topEvent.type !== 'message')) {
-        return { event: 'OK' };
-      }
+      // if (!isValid || (!message && topEvent.type !== 'message')) {
+      //   return { event: 'OK' };
+      // }
 
       this.logger.log(message, LineService.name + ' Webhook Post');
 
@@ -59,15 +59,7 @@ export class LineService {
     sessionId: string = new Date().toUTCString(),
   ) {
     try {
-      const agentOpenAI = await this.openAIFactory.build('agent', null, {
-        sessionId,
-      });
-      const vectorStore = await this.openAIFactory.build('embedding', null);
-
-      await agentOpenAI.setVectorStore(vectorStore);
-      const agent = await agentOpenAI.buildSequentialChain();
-
-      const response = await agent.promptAnswer(message);
+      const response = await this.gptChain.promptAnswer(message, sessionId);
 
       return response;
     } catch (err) {

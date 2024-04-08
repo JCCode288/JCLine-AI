@@ -19,6 +19,7 @@ export class OpenaiConfig extends ConfigService {
         openAIApiKey,
         maxRetries,
         temperature,
+        verbose: true,
       };
 
       for (const key in configs) {
