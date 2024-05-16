@@ -8,8 +8,8 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    // origin: ['/.line./is'],
-    origin: '*',
+    origin: ['/.line./is'],
+    // origin: '*',
     methods: 'GET,POST',
     preflightContinue: false,
   });
